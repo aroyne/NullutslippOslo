@@ -1,0 +1,41 @@
+name: Deploy Klimadashboard til GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Kjører automatisk hver gang du pusher til main-branchen
+  workflow_dispatch: # Lar deg trigge skriptet manuelt fra GitHub-nettsiden ved behov
+
+permissions:
+  contents: write  # Gir actionen rettigheter til å skrive/pushe den genererte siden
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Sjekk ut kode
+      uses: actions/checkout@v4
+
+    - name: Sett opp Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+        cache: 'pip' # Cacher avhengigheter for raskere kjøretid ved neste bygg
+
+    - name: Installer avhengigheter
+      run: |
+        python -m pip install --upgrade pip
+        pip install plotly pandas openpyxl  # Legg til eventuelle andre biblioteker du bruker
+
+    - name: Generer dashboard (Kjør Python-skript)
+      run: |
+        python src/generer_graf.py
+        # VIKTIG: Sørg for at skriptet ditt lagrer filen som 'index.html' i rotmappen
+
+    - name: Last opp til GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: .  # Mappen som skal publiseres (rotmappen der index.html ligger)
+        branch: gh-pages  # Branchen nettsiden skal serves fra (opprettes automatisk herfra)
+        clean: true  # Sletter gamle filer som ikke lenger genereres av skriptet
